@@ -7,22 +7,11 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#1C1F26;
-  --panel:#252830;
-  --surface:#2E3240;
-  --raised:#373B4D;
-  --hover:#404560;
-  --green:#00E676;
-  --green-muted:#1A3A2A;
-  --text:#FFFFFF;
-  --text2:#C8CCDA;
-  --text3:#8890A8;
-  --border:#3A3F52;
-  --border2:#454A5E;
-  --ok:#00E676;
-  --warn:#FFB300;
-  --err:#FF3D00;
-  --blocked:#FF6B35;
+  --bg:#1C1F26;--panel:#252830;--surface:#2E3240;--raised:#373B4D;--hover:#404560;
+  --green:#00E676;--green-muted:#1A3A2A;
+  --text:#FFFFFF;--text2:#C8CCDA;--text3:#8890A8;
+  --border:#3A3F52;--border2:#454A5E;
+  --ok:#00E676;--warn:#FFB300;--err:#FF3D00;--blocked:#FF6B35;
 }
 html,body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;font-size:13px;min-height:100vh}
 .hdr{background:var(--panel);border-bottom:2px solid var(--green);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
@@ -36,13 +25,18 @@ html,body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;fo
 .save-btn:hover{background:rgba(0,230,118,0.2)}
 .save-btn:active{opacity:.8}
 .save-btn.saving{opacity:.6;cursor:default}
-.save-msg{color:var(--text3);font-size:10px;min-width:52px;font-family:monospace}
-.sync-status{font-size:9px;color:var(--text3);font-family:monospace;display:flex;align-items:center;gap:5px}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3)}
+.sync-status{font-size:9px;color:var(--text3);font-family:monospace;display:flex;align-items:center;gap:5px;cursor:pointer}
+.sync-status:hover{color:var(--text2)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0}
 .sync-dot.live{background:var(--ok)}
 .sync-dot.saving{background:var(--warn);animation:pulse 1s infinite}
 .sync-dot.error{background:var(--err)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.share-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 20px;display:none;align-items:center;gap:10px;font-size:11px}
+.share-bar.show{display:flex}
+.share-url{background:var(--raised);border:1px solid var(--border2);color:var(--text2);font-family:monospace;font-size:10px;padding:4px 8px;flex:1;outline:none;border-radius:2px;cursor:text}
+.copy-btn{background:var(--green-muted);border:1px solid var(--green);color:var(--green);font-size:9px;font-weight:700;padding:4px 10px;cursor:pointer;border-radius:2px;white-space:nowrap}
+.copy-btn:hover{background:rgba(0,230,118,0.2)}
 .summary{display:flex;gap:7px;flex-wrap:wrap;padding:9px 20px;background:var(--panel);border-bottom:1px solid var(--border);align-items:center}
 .pill{font-size:9px;font-weight:700;letter-spacing:.1em;padding:3px 10px;border:1px solid;white-space:nowrap;border-radius:2px}
 .p-total{border-color:var(--border2);color:var(--text3)}
@@ -90,7 +84,7 @@ textarea.nt::placeholder{color:var(--text3)}
 input.oi{background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text2);font-size:11px;font-family:monospace;padding:2px 4px;width:160px;outline:none}
 input.oi:focus{border-color:var(--green);color:var(--text)}
 .last-saved{font-size:9px;color:var(--text3);font-family:monospace}
-.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:10px 16px;border-radius:4px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:10px 16px;border-radius:4px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;max-width:320px}
 .toast.show{opacity:1}
 .toast.ok{border-color:rgba(0,230,118,.5);color:var(--ok)}
 .toast.err{border-color:rgba(255,61,0,.5);color:var(--err)}
@@ -105,12 +99,20 @@ input.oi:focus{border-color:var(--green);color:var(--text)}
     <div class="hsubtitle">MANUFACTURING ENGINEERING &nbsp;|&nbsp; WEEKLY PROGRAM TRACKER</div>
   </div>
   <div class="hmeta">
-    <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">connecting...</span></div>
+    <div class="sync-status" onclick="toggleShareBar()" title="Click to share link with team">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label">connecting...</span>
+    </div>
     <span class="mlabel">WEEK</span><input class="minput" id="i-week" placeholder="WW__" maxlength="8">
     <span class="mlabel">DATE</span><input class="minput" id="i-date" type="date">
     <button class="save-btn" id="save-btn" onclick="saveAll()">&#x2713; SAVE</button>
-    <span class="save-msg" id="save-msg"></span>
   </div>
+</div>
+<div class="share-bar" id="share-bar">
+  <span style="font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--green);white-space:nowrap">SHARE LINK</span>
+  <input class="share-url" id="share-url" readonly>
+  <button class="copy-btn" onclick="copyShareUrl()">COPY LINK</button>
+  <span style="font-size:9px;color:var(--text3)">Send this URL to your team — everyone shares the same data</span>
 </div>
 <div class="summary" id="summary"></div>
 <div class="grid" id="grid"></div>
@@ -139,12 +141,17 @@ var STATUSES=[{v:'ns',l:'NOT STARTED'},{v:'ip',l:'IN PROGRESS'},{v:'co',l:'COMPL
 var SC={ns:'s-ns',ip:'s-ip',co:'s-co',bl:'s-bl',ar:'s-ar'};
 var state={};var STORAGE_KEY='hyliion-relo-v1';var saveTimer=null;
 var syncDot=document.getElementById('sync-dot');var syncLabel=document.getElementById('sync-label');
-var GIST_ID=localStorage.getItem(STORAGE_KEY+'_gist')||'';
+var urlParams=new URLSearchParams(window.location.search);
+var GIST_ID=urlParams.get('gist')||localStorage.getItem(STORAGE_KEY+'_gist')||'';
+if(GIST_ID)localStorage.setItem(STORAGE_KEY+'_gist',GIST_ID);
 function isOverdue(d){return d&&new Date(d)<new Date(new Date().toDateString())}
 function stClass(v){return SC[v]||'s-ns'}
 function setSyncState(s,msg){syncDot.className='sync-dot'+(s?' '+s:'');syncLabel.textContent=msg;}
-function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(function(){t.className='toast'},2500);}
-function saveToGist(data){return fetch('https://api.github.com/gists'+(GIST_ID?'/'+GIST_ID:''),(function(){var o={method:GIST_ID?'PATCH':'POST',headers:{'Content-Type':'application/json','Accept':'application/vnd.github+json'},body:JSON.stringify({description:'Hyliion Relo Tracker State',public:false,files:{'tracker-state.json':{content:JSON.stringify(data)}}})};return o;})()).then(function(r){return r.json()}).then(function(j){if(j.id&&!GIST_ID){GIST_ID=j.id;localStorage.setItem(STORAGE_KEY+'_gist',GIST_ID);}return j;});}
+function showToast(msg,type,dur){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');setTimeout(function(){t.className='toast'},dur||2500);}
+function getShareUrl(){return window.location.origin+window.location.pathname+(GIST_ID?'?gist='+GIST_ID:'');}
+function toggleShareBar(){var bar=document.getElementById('share-bar');var showing=bar.classList.contains('show');bar.classList.toggle('show',!showing);if(!showing)document.getElementById('share-url').value=getShareUrl();}
+function copyShareUrl(){navigator.clipboard.writeText(getShareUrl()).then(function(){showToast('Link copied! Share with your team.','ok',3000);}).catch(function(){showToast('Select the URL above and copy manually','',4000);});}
+function saveToGist(data){return fetch('https://api.github.com/gists'+(GIST_ID?'/'+GIST_ID:''),(function(){return {method:GIST_ID?'PATCH':'POST',headers:{'Content-Type':'application/json','Accept':'application/vnd.github+json'},body:JSON.stringify({description:'Hyliion Relo Tracker - '+new Date().toLocaleDateString(),public:false,files:{'tracker-state.json':{content:JSON.stringify(data)}}})};})()).then(function(r){return r.json()}).then(function(j){if(j.id){if(!GIST_ID){GIST_ID=j.id;localStorage.setItem(STORAGE_KEY+'_gist',GIST_ID);window.history.replaceState({},'','?gist='+GIST_ID);document.getElementById('share-url').value=getShareUrl();}}return j;});}
 function loadFromGist(){if(!GIST_ID)return Promise.resolve(null);return fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Accept':'application/vnd.github+json'}}).then(function(r){return r.json()}).then(function(j){var f=j.files&&j.files['tracker-state.json'];if(f&&f.content)return JSON.parse(f.content);return null;});}
 function buildGrid(){var g=document.getElementById('grid');g.innerHTML='';COLS.forEach(function(col){var div=document.createElement('div');div.className='col';var opts=STATUSES.map(function(o){return '<option value="'+o.v+'">'+o.l+'</option>'}).join('');var rows='';col.items.forEach(function(item,i){var k=col.id+'_'+i;rows+='<div class="row"><div class="cell-lbl">'+item+'</div><div class="cell"><input type="date" class="di" id="d-'+k+'" onchange="onDate(\''+k+'\',this)"></div><div class="cell"><select class="st s-ns" id="s-'+k+'" onchange="onStatus(\''+k+'\',this)">'+opts+'</select></div></div>';});div.innerHTML='<div class="col-hdr"><svg class="col-icon" viewBox="0 0 24 24" fill="none" stroke="#8890A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="'+col.path+'"/></svg><span class="col-title">'+col.title+'</span></div><div class="tbl-hdr"><div class="th">DELIVERABLE</div><div class="th">TARGET DATE</div><div class="th">STATUS</div></div><div>'+rows+'</div><div class="notes-wrap"><div class="notes-lbl">NOTES / ACTIONS</div><textarea class="nt" id="nt-'+col.id+'" placeholder="Blockers, actions, owner notes..." rows="4"></textarea></div>';g.appendChild(div);var nt=document.getElementById('nt-'+col.id);nt.value=state['nt_'+col.id]||'';nt.addEventListener('input',function(){state['nt_'+col.id]=nt.value;scheduleSave();});});}
 function applyState(){COLS.forEach(function(col){var nt=document.getElementById('nt-'+col.id);if(nt)nt.value=state['nt_'+col.id]||'';col.items.forEach(function(_,i){var k=col.id+'_'+i,sv=state[k+'_st']||'ns',dv=state[k+'_dt']||'';var sel=document.getElementById('s-'+k),dat=document.getElementById('d-'+k);if(sel){sel.value=sv;sel.className='st '+stClass(sv);}if(dat){dat.value=dv;dat.className='di'+(dv&&isOverdue(dv)&&sv!=='co'?' overdue':'');}});});document.getElementById('i-week').value=state._week||'';document.getElementById('i-date').value=state._date||new Date().toISOString().split('T')[0];document.getElementById('i-owner').value=state._owner||'';if(state._saved)document.getElementById('last-saved').textContent='Last saved: '+new Date(state._saved).toLocaleString();updateSummary();}
@@ -153,9 +160,10 @@ function onDate(k,el){state[k+'_dt']=el.value;var sv=state[k+'_st']||'ns';el.cla
 function updateSummary(){var total=0,co=0,ip=0,ar=0,bl=0,ns=0;COLS.forEach(function(col){col.items.forEach(function(_,i){var v=state[col.id+'_'+i+'_st']||'ns';total++;if(v==='co')co++;else if(v==='ip')ip++;else if(v==='ar')ar++;else if(v==='bl')bl++;else ns++;})});var pct=Math.round(co/total*100);document.getElementById('summary').innerHTML='<div class="pill p-total">'+total+' ITEMS</div><div class="pill p-ok">'+co+' COMPLETE</div><div class="pill p-warn">'+ip+' IN PROGRESS</div><div class="pill p-blocked">'+bl+' BLOCKED</div><div class="pill p-err">'+ar+' AT RISK</div><div class="pill p-ns">'+ns+' NOT STARTED</div><div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%"></div></div><span class="prog-pct">'+pct+'%</span></div>';}
 function syncFromDOM(){COLS.forEach(function(col){col.items.forEach(function(_,i){var k=col.id+'_'+i,sel=document.getElementById('s-'+k),dat=document.getElementById('d-'+k);if(sel)state[k+'_st']=sel.value;if(dat)state[k+'_dt']=dat.value;});var nt=document.getElementById('nt-'+col.id);if(nt)state['nt_'+col.id]=nt.value;});state._week=document.getElementById('i-week').value;state._date=document.getElementById('i-date').value;state._owner=document.getElementById('i-owner').value;}
 function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveAll,3000);}
-function saveAll(){clearTimeout(saveTimer);syncFromDOM();state._saved=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));setSyncState('saving','saving...');var btn=document.getElementById('save-btn');btn.classList.add('saving');saveToGist(state).then(function(){setSyncState('live','synced');showToast('Saved and synced','ok');document.getElementById('last-saved').textContent='Last saved: '+new Date().toLocaleTimeString();btn.classList.remove('saving');}).catch(function(){setSyncState('error','sync failed - local only');showToast('Saved locally (sync failed)','err');btn.classList.remove('saving');});}
-function loadAll(){setSyncState('','connecting...');var local=null;try{var r=localStorage.getItem(STORAGE_KEY);if(r)local=JSON.parse(r);}catch(e){}if(local){state=local;buildGrid();applyState();}else{state={};buildGrid();applyState();}loadFromGist().then(function(remote){if(remote&&(!local||!local._saved||(remote._saved&&remote._saved>local._saved))){state=remote;applyState();showToast('Loaded latest from shared storage','ok');}setSyncState('live','live');}).catch(function(){setSyncState('','local only');if(!GIST_ID)setSyncState('','first save creates shared link');});}
-setInterval(function(){loadFromGist().then(function(remote){if(remote&&remote._saved&&(!state._saved||remote._saved>state._saved)){state=remote;applyState();showToast('Updated from another user','ok');}}).catch(function(){});},30000);
+function saveAll(){clearTimeout(saveTimer);syncFromDOM();state._saved=new Date().toISOString();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));setSyncState('saving','saving...');document.getElementById('save-btn').classList.add('saving');saveToGist(state).then(function(){setSyncState('live','synced – click to share');document.getElementById('last-saved').textContent='Last saved: '+new Date().toLocaleTimeString();document.getElementById('save-btn').classList.remove('saving');}).catch(function(){setSyncState('error','local only');showToast('Saved locally – check network','err');document.getElementById('save-btn').classList.remove('saving');});}
+function silentRefresh(){loadFromGist().then(function(remote){if(remote&&remote._saved&&(!state._saved||remote._saved>state._saved)){state=remote;applyState();showToast('Updated from team member','ok');}}).catch(function(){});}
+function loadAll(){setSyncState('','connecting...');var local=null;try{var r=localStorage.getItem(STORAGE_KEY);if(r)local=JSON.parse(r);}catch(e){}state=local||{};buildGrid();applyState();if(GIST_ID){loadFromGist().then(function(remote){if(remote&&(!local||!local._saved||(remote._saved&&remote._saved>local._saved))){state=remote;applyState();}setSyncState('live','synced – click to share');}).catch(function(){setSyncState('error','offline – using local data');});}else{setSyncState('','save to create share link');}}
+setInterval(silentRefresh,30000);
 setInterval(saveAll,120000);
 window.addEventListener('beforeunload',function(){syncFromDOM();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));});
 document.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAll();}});
@@ -163,3 +171,4 @@ loadAll();
 </script>
 </body>
 </html>
+
